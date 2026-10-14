@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>A Jornada do Amor</title>
+<!--
+=====================================================================
+ A JORNADA DO AMOR — a missão para encontrar Mary
+ Arquivo único: HTML + CSS + JavaScript puro. Sem cadastro, sem
+ servidores externos, nenhum dado sai do aparelho.
+
+ COMO EDITAR (tudo fica no <script>, em blocos comentados):
+  • Textos da carta ............ constante LETTER
+  • Perguntas e falas das fases . constante LEVELS
+  • Falas da introdução ........ constante INTRO
+  • Falas do reencontro ........ constante REUNION
+  • Falas aleatórias da Gertrudes: GERT_OK / GERT_NO / GERT_NO2
+  • Nomes e cores dos personagens: CHARS
+
+ COMO TROCAR OS DESENHOS (sprites):
+  Os personagens são pixel art desenhada em código (constante SPR).
+  Para usar uma imagem sua (PNG), preencha CUSTOM_IMAGES, por exemplo:
+     matheus: "matheus.png"           (arquivo na mesma pasta)
+  ou um data-URI. Se a foto/imagem do Matheus for incorporada ao projeto,
+  REMOVA ou troque antes de publicar em um endereço público.
+=====================================================================
+-->
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--rose:#f7b6c8;--wine:#6b1d3a;--wine2:#3e0f23;--cream:#fff3dc;--gold:#e8b64a;--lilac:#b79bd9;--forest:#2f6b3a;--night:#16204a;--pink:#e0488a}
+html,body{margin:0;height:100%;background:#150c1f;font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;color:#3a1426;overflow:hidden}
+#game{position:relative;height:100vh;height:100dvh;max-width:520px;margin:0 auto;overflow:hidden;background:#2a1a3a;box-shadow:0 0 40px #000a}
+#bg,#fx{position:absolute;inset:0}
+#fx{pointer-events:none;z-index:30;overflow:hidden}
+#bg .sky{position:absolute;inset:0}
+#bg svg{position:absolute;inset:0;width:100%;height:100%}
+.ff{position:absolute;width:5px;height:5px;background:#fff7a0;box-shadow:0 0 8px 3px #ffe96b;border-radius:50%;animation:ff 3s ease-in-out infinite alternate}
+@keyframes ff{from{transform:translate(0,0);opacity:.2}to{transform:translate(14px,-18px);opacity:1}}
+.torch{position:absolute;font-size:30px;animation:flick .4s steps(2) infinite alternate;filter:drop-shadow(0 0 10px #ff9a2a)}
+@keyframes flick{from{transform:scale(1) rotate(-3deg)}to{transform:scale(1.15) rotate(3deg)}}
+#view{position:absolute;inset:0;display:flex;flex-direction:column;padding-top:54px;z-index:5}
+#view.in{animation:fadein .4s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.hud{position:absolute;top:0;left:0;right:0;height:54px;padding:6px 8px;display:flex;align-items:center;gap:6px;z-index:8;background:linear-gradient(#000a,#0000)}
+.hud.off{display:none}
+.hbtn{width:44px;height:44px;border:3px solid var(--wine2);background:var(--cream);border-radius:8px;font-size:20px;box-shadow:0 3px 0 var(--wine2);cursor:pointer;padding:0}
+.ttl{flex:1;text-align:center;color:#fff;font-weight:900;font-size:15px;text-shadow:0 2px 0 var(--wine2);line-height:1.1}
+.sc{background:var(--cream);border:3px solid var(--wine2);border-radius:8px;padding:4px 8px;font-weight:800;font-size:13px;white-space:nowrap}
+.spr{display:block;width:100%;height:100%;image-rendering:pixelated;filter:drop-shadow(2px 0 0 #2a1320) drop-shadow(-2px 0 0 #2a1320) drop-shadow(0 2px 0 #2a1320) drop-shadow(0 -2px 0 #2a1320)}
+.btn{font:inherit;font-weight:800;font-size:17px;min-height:50px;padding:10px 18px;border:3px solid var(--wine2);background:var(--pink);color:#fff;border-radius:8px;box-shadow:0 4px 0 var(--wine2);cursor:pointer;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--wine2)}
+.btn.sec{background:var(--cream);color:var(--wine);text-shadow:none}
+.btn.big{width:100%;font-size:20px}
+.btn[disabled]{opacity:.5}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row .btn{flex:1}
+.panel{margin:0 8px calc(8px + env(safe-area-inset-bottom));background:var(--cream);border:4px solid var(--wine);border-radius:10px;box-shadow:0 0 0 3px var(--gold),0 6px 0 3px var(--wine2);padding:12px;max-height:62%;overflow:auto;display:flex;flex-direction:column;gap:10px;flex:0 0 auto}
+.dlg{display:flex;gap:10px;align-items:flex-start}
+.portrait{flex:0 0 58px;width:58px;height:58px;border:3px solid var(--wine);border-radius:8px;background:#f6dcea;overflow:hidden;padding:2px}
+.portrait .spr{filter:none}
+.bubble{flex:1}
+.nm{display:inline-block;color:#fff;font-weight:800;font-size:13px;padding:2px 10px;border-radius:6px;margin-bottom:4px;letter-spacing:.5px}
+.bubble p{margin:0;font-size:17px;line-height:1.35}
+.q{font-weight:800;font-size:18px;color:var(--wine);line-height:1.25}
+.show{font-size:30px;text-align:center;background:#fff;border:2px dashed var(--lilac);border-radius:8px;padding:6px;line-height:1.3}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;gap:10px;align-items:center;text-align:left;font:inherit;font-size:16px;min-height:52px;padding:8px 10px;border:3px solid var(--wine);background:#fff;border-radius:8px;color:#3a1426;cursor:pointer;box-shadow:0 3px 0 var(--wine)}
+.opt b{flex:0 0 28px;height:28px;border-radius:6px;background:var(--lilac);color:#fff;display:flex;align-items:center;justify-content:center}
+.opt.ok{background:#37b36a;color:#fff;border-color:#1c6b3d;box-shadow:0 3px 0 #1c6b3d}
+.opt.no{background:#e4dede;color:#8a8080;text-decoration:line-through}
+.fb{border-radius:8px;padding:8px 10px;font-size:15.5px;line-height:1.35}
+.fb.good{background:#d8f5e2;border:2px solid #37b36a}
+.fb.bad{background:#fde1e6;border:2px solid #e0587a}
+.tip{display:flex;gap:8px;align-items:center;background:#e7f7e2;border:2px dashed #3fae4a;border-radius:8px;padding:6px 8px;font-size:14.5px}
+.tip .mini{flex:0 0 34px;width:34px;height:34px}
+.stage{flex:1;min-height:0;position:relative;display:flex;align-items:flex-end;padding:0 10px 4px;gap:6px}
+.actor{animation:breathe 2.4s ease-in-out infinite;transform-origin:bottom center;flex:0 0 auto}
+.actor.me{width:clamp(66px,22vw,108px);aspect-ratio:16/22}
+.actor.gert{width:clamp(44px,13vw,66px);aspect-ratio:1;margin-right:auto;margin-left:-6px;margin-bottom:4%}
+.actor.npc{width:clamp(96px,34vw,170px);aspect-ratio:1}
+.actor.mary{width:clamp(66px,22vw,108px);aspect-ratio:16/22}
+.stage.small .actor.me{width:clamp(50px,15vw,74px)}.stage.small .actor.npc{width:clamp(60px,20vw,100px)}.stage.small .actor.gert{width:44px}
+.stage.single{justify-content:center;align-items:center}
+.actor.big{width:clamp(130px,44vw,210px);aspect-ratio:1;animation:breathe 2.4s ease-in-out infinite}
+.actor.big.tall{aspect-ratio:16/22;width:clamp(100px,32vw,150px)}
+.bigemoji{font-size:90px;animation:breathe 3s ease-in-out infinite}
+@keyframes breathe{50%{transform:translateY(-4px) scaleY(1.02)}}
+.talk{animation:talk .45s ease-in-out infinite alternate!important}
+@keyframes talk{to{transform:translateY(-8px)}}
+.cheer{animation:cheer .8s ease-out!important}
+@keyframes cheer{30%{transform:translateY(-22px) rotate(-4deg)}60%{transform:translateY(0)}80%{transform:translateY(-9px) rotate(4deg)}}
+.confused{animation:conf .9s ease-in-out!important}
+@keyframes conf{25%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}75%{transform:rotate(-5deg)}}
+.surprise{animation:surp .6s ease-out!important}
+@keyframes surp{20%{transform:translateY(-14px) scale(1.12)}40%{transform:translateX(-4px)}60%{transform:translateX(4px)}}
+.bossbar{position:absolute;top:2px;left:10px;right:10px;background:#0009;border:3px solid #fff;border-radius:8px;padding:4px 8px;color:#fff;font-weight:800;font-size:12px}
+.bossbar i{display:block;height:12px;background:#3a1020;border-radius:4px;margin-top:3px;overflow:hidden}
+.bossbar i b{display:block;height:100%;background:linear-gradient(90deg,#ff4a6e,#ffb347);transition:width .8s}
+.findarea{position:absolute;inset:0 0 0 0;touch-action:manipulation}
+.fi{position:absolute;font-size:30px;line-height:1;transform:translate(-50%,-50%);background:none;border:0;padding:6px;cursor:pointer;filter:saturate(.65) brightness(.85)}
+.fi.got{filter:none;animation:cheer .8s;pointer-events:none}
+.fi.pulse{animation:pul .7s infinite alternate;filter:drop-shadow(0 0 8px #fff)}
+@keyframes pul{to{transform:translate(-50%,-50%) scale(1.35)}}
+.bush{position:absolute;font-size:34px;pointer-events:none;transform:translate(-50%,-50%);opacity:.95}
+.find-hud{position:absolute;top:2px;left:8px;background:var(--cream);border:3px solid var(--wine);border-radius:8px;padding:4px 10px;font-weight:800;z-index:3}
+.map{flex:1;position:relative;min-height:0}
+.map svg.line{position:absolute;inset:0;width:100%;height:100%}
+.node{position:absolute;transform:translate(-50%,-50%);width:84px;text-align:center;background:none;border:0;padding:0;font:inherit;cursor:pointer}
+.node .ic{width:58px;height:58px;margin:0 auto;border:4px solid var(--wine);background:var(--cream);border-radius:50%;overflow:hidden;box-shadow:0 3px 0 var(--wine2);padding:3px}
+.node .ic .spr{filter:none}
+.node .lb{display:block;margin-top:3px;background:var(--cream);border:2px solid var(--wine);border-radius:6px;font-size:11px;font-weight:800;padding:1px 4px;line-height:1.15}
+.node.open .ic{border-color:var(--gold);animation:glow 1.1s infinite alternate}
+@keyframes glow{to{box-shadow:0 0 0 6px #ffe08a99,0 3px 0 var(--wine2)}}
+.node.lock .ic{filter:grayscale(1) brightness(.7)}.node.lock .lb{opacity:.7}
+.node.done .ic{border-color:#37b36a}
+.node .tag{position:absolute;top:-6px;right:8px;font-size:20px}
+.marker{position:absolute;width:56px;transform:translate(-50%,-92%);z-index:4;pointer-events:none}
+.marker .me2{width:42px;aspect-ratio:16/22;margin:0 auto}
+.marker.walk{transition:left 1.5s linear,top 1.5s linear}
+.marker.walk .me2{animation:walk .25s steps(2) infinite}
+@keyframes walk{50%{transform:translateY(-4px) rotate(3deg)}}
+.mapbar{margin:0 8px calc(8px + env(safe-area-inset-bottom));background:var(--cream);border:4px solid var(--wine);border-radius:10px;padding:8px 10px;font-size:14px;font-weight:700}
+.bag{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;font-size:22px}
+.title{flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:6px 14px calc(14px + env(safe-area-inset-bottom));gap:8px}
+.logo{text-align:center;margin-top:8px}
+.logo h1{margin:0;font-size:clamp(34px,11vw,56px);line-height:.95;color:var(--cream);text-transform:uppercase;font-weight:900;text-shadow:0 3px 0 var(--wine),0 6px 0 var(--wine2),0 0 18px #ff5fa088;-webkit-text-stroke:2px var(--wine2)}
+.logo p{margin:10px auto 0;display:inline-block;background:var(--wine);color:var(--cream);font-weight:800;padding:4px 12px;border:3px solid var(--gold);border-radius:6px;font-size:14px}
+.cast{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;min-height:0}
+.cast .back{display:flex;align-items:flex-end;justify-content:center;gap:2px}
+.cast .front{display:flex;align-items:flex-end;justify-content:center;gap:0;margin-top:-10px}
+.cast .c{animation:breathe 2.6s ease-in-out infinite}
+.menu{display:flex;flex-direction:column;gap:10px}
+.modal{position:absolute;inset:0;background:#000b;z-index:40;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal .card{background:var(--cream);border:4px solid var(--wine);border-radius:12px;box-shadow:0 0 0 3px var(--gold);padding:16px;max-height:90%;overflow:auto;display:flex;flex-direction:column;gap:10px;width:100%}
+.modal h2{margin:0;color:var(--wine)}.modal ul{margin:0;padding-left:20px;line-height:1.5}
+.reward{align-items:center;text-align:center}
+.reward .rwe{font-size:64px;animation:cheer 1.2s infinite}
+.reun{position:relative;justify-content:center}
+.hug{display:flex;align-items:flex-end;justify-content:center;position:relative;margin-bottom:6px}
+.hug .a{width:clamp(80px,26vw,120px);aspect-ratio:16/22;animation:hug 2s ease-in-out infinite alternate}
+.hug .a.m2{animation-name:hug2}
+@keyframes hug{from{transform:translateX(-26px)}to{transform:translateX(8px)}}
+@keyframes hug2{from{transform:translateX(26px)}to{transform:translateX(-8px)}}
+.hug .bh{position:absolute;top:-26px;left:50%;transform:translateX(-50%);font-size:40px;animation:cheer 1.6s infinite}
+.pets{display:flex;align-items:flex-end;justify-content:center;gap:0;position:absolute;left:0;right:0;bottom:2px}
+.pets .p{width:clamp(48px,15vw,76px);aspect-ratio:1;animation:breathe 2.3s ease-in-out infinite}
+.paper{background:#f7e4bd;border:4px solid #8a5a30;border-radius:6px;padding:16px 14px;overflow:auto;margin:0 8px;flex:1;min-height:0;box-shadow:0 6px 0 #5a3a20;font-family:Georgia,"Times New Roman",serif;font-size:17px;line-height:1.5;color:#4a2a1a}
+.paper p{margin:0 0 12px;white-space:pre-wrap}
+.paper .sign{text-align:right;font-style:italic}
+.letterbar{padding:10px 8px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px}
+.stat{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--lilac);font-weight:700}
+.ans{background:#fff;border:2px solid var(--lilac);border-radius:8px;padding:6px 8px;font-size:14.5px}
+input.txt{font:inherit;font-size:16px;padding:10px;border:3px solid var(--wine);border-radius:8px;width:100%;background:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:14.5px;font-weight:700;padding:8px 10px;border:2px solid var(--wine);background:#fff;border-radius:16px;cursor:pointer;min-height:40px}
+.toast{position:absolute;left:50%;bottom:90px;transform:translateX(-50%);background:var(--wine);color:#fff;padding:8px 14px;border-radius:8px;z-index:50;font-weight:700;border:2px solid var(--gold);max-width:90%;text-align:center}
+.p-fx{position:absolute;top:-30px;font-size:22px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-height:640px){.bubble p{font-size:15.5px}.opt{min-height:46px;font-size:15px}.actor.gert{margin-bottom:2%}}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="bg"></div>
+  <div id="hud" class="hud off"></div>
+  <main id="view"></main>
+  <div id="fx" aria-hidden="true"></div>
+</div>
+<noscript>Este jogo precisa de JavaScript para funcionar.</noscript>
+
+<script src="config.js"></script>
+<script>
+'use strict';
+/* ================================================================
+   1) DADOS EDITÁVEIS
+   ================================================================ */
+
+/* Para usar imagens suas no lugar da pixel art, preencha aqui (ex.: matheus:"matheus.png") */
+const CUSTOM_IMAGES = { matheus:"", mary:"", luna:"", stella:"", frida:"", gertrudes:"", chico:"" };
+
+const CHARS = {
+  matheus:  {name:"Matheus",  color:"#3b6fd8", crop:[0,12]},
+  mary:     {name:"Mary",     color:"#d8478f", crop:[0,12]},
+  luna:     {name:"Luna",     color:"#7c9a68", crop:[0,14]},
+  stella:   {name:"Stella",   color:"#d8873a", crop:[0,14]},
+  frida:    {name:"Frida",    color:"#a8683a", crop:[0,16]},
+  gertrudes:{name:"Gertrudes",color:"#2f9e4a", crop:[0,16]},
+  chico:    {name:"Chico",    color:"#2b5fb8", crop:[0,16]},
+  narrador: {name:"Narrador", color:"#6b1d3a"}
+};
+
+/* Falas aleatórias da Gertrudes */
+const GERT_OK = [
+  "Aff! Você está ficando bom demais nisso. Assim não tem graça!",
+  "Foi sorte. Só pode ter sido sorte.",
+  "Hmpf. Eu ia falar a resposta certa. Juro."
+];
+const GERT_NO = [
+  "EU AVISEI! Quer dizer... não avisei nada, mas a culpa não foi minha!",
+  "Viu? Eu falei que... bom, eu não falei nada. Mas errou!",
+  "Tá vendo? Mais um motivo pra desistir e voltar pra casa comigo."
+];
+const GERT_NO2 = [
+  "Se você perder essa fase, podemos voltar para casa e assistir televisão. Só nós dois. Sem princesas.",
+  "Desiste, Matheus! Eu tenho pipoca e um sofá só pra nós dois."
+];
+
+/* Introdução: [quem, texto] */
+const INTRO = [
+  ["narrador","No alto de um reino encantado, uma princesa esperava por alguém muito especial..."],
+  ["mary","Estarei aqui te esperando... Você consegue chegar até mim? Eu acredito em você! ❤️"],
+  ["matheus","Eu vou conseguir, Mary. Não importa quantos desafios apareçam no caminho. Eu vou chegar até você."],
+  ["gertrudes","Matheus, vamos buscar sua humana favorita! Quer dizer... sua segunda humana favorita. Eu continuo em primeiro lugar, né?"],
+  ["narrador","Mas um papagaio muito ciumento, o Chico, já tinha um plano para impedir a missão..."],
+  ["chico","Cachorras! Guardem cada canto do reino! Ninguém chega até a Mary!"],
+  ["narrador","Luna, Stella e Frida passaram a guardar a floresta, o castelo dos brinquedos e a ponte. A aventura começa agora!"]
+];
+
+/* Reencontro */
+const REUNION = [
+  ["mary","Você conseguiu, amor... Passou por todos os desafios, conheceu nossos filhos e chegou até mim. ❤️"],
+  ["matheus","Eu disse que ia chegar. Nada neste reino ia me impedir de te encontrar."],
+  ["chico","Posso receber um carinho também? Prometo que agora eu me comporto."],
+  ["mary","Claro que pode, Chico. Tem carinho para todo mundo!"],
+  ["gertrudes","Está bem, Matheus. Pode ficar com a Mary. Mas quero deixar registrado que eu estava aqui primeiro!"],
+  ["narrador","E, no jardim, todos ficaram juntos, em família. Mary tinha uma última surpresa guardada..."]
+];
+
+/* Carta final (um parágrafo por item). Edite à vontade. */
+const LETTER = [
+  "Para o amor da minha vida ❤️",
+  "Meu amor,",
+  "Se você chegou até aqui, é porque nem mesmo a Gertrudes, as cachorras e o Chico conseguiram impedir você de chegar até mim. 😂❤️",
+  "Brincadeiras à parte, eu queria aproveitar esse pequeno presente para te lembrar de uma coisa: eu tenho muito orgulho de você.",
+  "Tenho orgulho de quem você é, de tudo o que você enfrenta e de cada vez que tenta seguir em frente, mesmo quando as coisas não são fáceis. Quero que você nunca se esqueça do quanto é importante para mim e do quanto eu acredito em você.",
+  "Eu amo dividir a vida com você, sonhar com o nosso futuro e imaginar todas as coisas que ainda vamos construir juntos. Não precisamos ter tudo resolvido hoje. Para mim, o que importa é continuarmos caminhando lado a lado, aprendendo, crescendo e escolhendo um ao outro todos os dias.",
+  "Se eu pudesse voltar no tempo e escolher novamente alguém para compartilhar a minha vida, escolheria você outra vez.",
+  "Porque, entre todas as pessoas que eu poderia encontrar pelo caminho, eu não poderia ter escolhido alguém melhor para chamar de meu amor, meu companheiro e amor da minha vida.",
+  "Eu te amo mais do que consigo colocar em palavras. E espero que, em cada fase da nossa história, você nunca tenha dúvidas de que tem alguém aqui torcendo por você, acreditando em você e sonhando com um futuro ao seu lado.",
+  "Com todo o meu amor,",
+  "Mary ❤️"
+];
+
+/* Fases. Tipos de passo: say | quiz | find | ask
+   quiz: opts (3), ok (índice certo), fb (feedback de cada opção), tip (dica da Gertrudes, pode ser falsa), show (emojis grandes) */
+const LEVELS = {
+  luna:{ title:"Floresta dos Segredos", sub:"Luna, a espertinha", bg:"forest", npc:"luna",
+    wrongLine:"Hum... achei que você prestasse mais atenção em mim!",
+    reward:{e:"🍃",n:"Folha dos Segredos",t:"A Luna confia em você. Quase."},
+    steps:[
+      {t:"say", lines:[["luna","Eu? Não sei de nada. Essa comida apareceu sozinha!"],["matheus","Luna... eu nem perguntei nada ainda. 🤨"],["luna","Eu sou muito inocente. A Gertrudes é que não presta!"],["gertrudes","Eu?! Que calúnia! Eu só sou... uma ave de palavra."]]},
+      {t:"find", prompt:"Ajude o Matheus a encontrar os objetos que a Luna pegou do chão!",
+        items:[{e:"🧦",n:"meia",x:18,y:38},{e:"🍪",n:"biscoito",x:70,y:30},{e:"🥕",n:"cenourinha",x:46,y:62},{e:"🍞",n:"pão",x:84,y:66}],
+        npcMiss:"Ali não tem nada. Eu juro. Você tem provas de que eu peguei isso do chão?", npcFound:"Isso estava ali por acaso! Eu nem vi.", hint:"Procure perto das moitas... ou não. Eu nunca sei de nada!"},
+      {t:"quiz", q:"Qual é o talento secreto da Luna?", tip:"Confia em mim. Eu sou uma ave de palavra. Só não prometi que seriam palavras verdadeiras. (A resposta é a A!)",
+        opts:["Ser a cachorra mais obediente do mundo.","Comer coisas do chão e fingir que não sabe de nada.","Ficar quietinha no cantinho dela."], ok:1,
+        fb:["Obediente? Até a Luna riu dessa. 😂","Isso mesmo! Ela engole e faz cara de paisagem. 🕵️","Quietinha? Só se for planejando o próximo petisco. 😅"]},
+      {t:"quiz", q:"Quem são os humanos favoritos da Luna?",
+        opts:["Josuel e a mãe de Mary.","Apenas Matheus.","Pessoas desconhecidas."], ok:0,
+        fb:["Isso! Josuel e a mãe da Mary têm um lugar especial no coração dela. 💕","Só o Matheus? Ela gosta de você, mas tem outros favoritos!","Desconhecidos? Não mesmo! Os favoritos dela são de casa."]},
+      {t:"quiz", q:"O que a Luna faz quando alguém a flagra com algo do chão?",
+        opts:["Entrega tudo e pede desculpas.","Faz cara de quem não sabe de nada.","Escreve uma carta de confissão."], ok:1,
+        fb:["Pedir desculpas? A Luna nunca! 😇","Perfeito! Cara de inocente, nível máximo. 😇","Uma carta? Ela nem sabe escrever. (Ou sabe? Não sabe de nada!)"]},
+      {t:"say", lines:[["luna","Está bem, você me conhece mesmo. Pode passar."],["gertrudes","Aff! Você está ficando bom demais nisso. Assim não tem graça!"]]}
+    ]},
+  stella:{ title:"Castelo dos Brinquedos", sub:"Stella, a dona do pedaço", bg:"toys", npc:"stella",
+    wrongLine:"Hmpf! Errou. Aqui quem decide sou EU. Tente de novo!",
+    reward:{e:"👑",n:"Coroa da Rainha do Pedaço",t:"Emprestada pela Stella. Por pouco tempo."},
+    steps:[
+      {t:"say", lines:[["stella","Aqui quem manda sou EU. Todo mundo só mora aqui."],["stella","Antes de passar, quero saber se você trouxe algum brinquedo."]]},
+      {t:"quiz", q:"Qual brinquedo você oferece para a Stella?", show:"🧸 &nbsp; 🥦 &nbsp; 🧦", tip:"Dá o brócolis! Cachorras adoram brócolis. Eu li num livro. (Não li.)",
+        opts:["🧸 Um ursinho de pelúcia","🥦 Um brócolis cru","🧦 Uma meia furada"], ok:0,
+        fb:["Ela apertou o ursinho: “Aceito. Mas é MEU.” 👑","Brócolis NÃO é brinquedo. A Stella ficou ofendida. 🥦","Uma meia? Quem gosta de pegar essas coisas é a Luna! 😂"]},
+      {t:"quiz", q:"Os brinquedos aparecem em sequência. Qual vem depois?", show:"🧸 🎾 🧸 🎾 🧸 ❓", tip:"É o osso. Tenho quase certeza. (Não tenho.)",
+        opts:["🎾 A bolinha","🦴 O osso","🧸 O ursinho"], ok:0,
+        fb:["Boa! Ursinho, bolinha, ursinho, bolinha... o padrão fecha! 🎾","O osso não faz parte do padrão. Olhe de novo!","O ursinho acabou de aparecer. Falta a bolinha!"]},
+      {t:"quiz", q:"Quem manda na casa?",
+        opts:["Matheus.","Mary.","Stella. Todo mundo só mora lá."], ok:2,
+        fb:["Ah, você achou que mandava? Que fofo. 😂","A Mary pensa que manda... A Stella discorda.","Exato! A rainha é ela. O resto são moradores. 👑"]},
+      {t:"quiz", q:"O que a Stella mais gosta?",
+        opts:["Ficar sem brinquedos.","Brinquedos e atenção.","Nunca receber carinho."], ok:1,
+        fb:["Sem brinquedos?! Ela perderia a coroa. 😱","Brinquedos e atenção! Ela quer tudo. 🧸💕","Nunca receber carinho? Só se for brincadeira!"]},
+      {t:"quiz", q:"O que a Stella sente quando você dá atenção para outra cachorra?",
+        opts:["Fica na maior tranquilidade.","Ciúmes! Quer a atenção só para ela.","Nem percebe."], ok:1,
+        fb:["Tranquilidade? Ela já está bufando de longe. 😤","Ciumenta e possessiva, é a cara dela! 💛","Percebe sim. Ela percebe tudo."]},
+      {t:"say", lines:[["stella","Eu gosto de vocês dois. Só não gosto quando vocês me deixam de lado."],["matheus","Prometo que nunca vou te deixar de lado, Stella. 💛"],["gertrudes","Hmpf. Ela gosta mais de você do que de mim? Impossível. Eu sou a mais importante!"]]}
+    ]},
+  frida:{ title:"Ponte da Lealdade", sub:"Frida, a guardiã leal", bg:"bridge", npc:"frida",
+    wrongLine:"Ops! Quase! Mas eu te perdoo se me levar para passear.",
+    reward:{e:"🔑",n:"Chave do Castelo",t:"A Frida entregou sem pensar duas vezes."},
+    steps:[
+      {t:"say", lines:[["frida","Matheus! Vamos passear? E depois brincar? E depois passear de novo?"],["matheus","Calma, Frida! Primeiro eu preciso atravessar essa ponte."],["frida","Se você trouxer um brinquedo, eu entrego até a chave do castelo!"]]},
+      {t:"quiz", q:"A Frida adora esta rotina. O que vem depois?", show:"🚶 🧸 🚶 🧸 🚶 ❓", tip:"Depois vem... soneca! Todo mundo merece uma soneca. 😴",
+        opts:["🧸 Brincar com brinquedo","🚶 Passear de novo","🛌 Dormir o dia inteiro"], ok:0,
+        fb:["Isso! Passear, brincar, passear, brincar... 🐾","Passeio de novo? Já foi um, falta o brinquedo!","Dormir? A Frida tem energia de sobra!"]},
+      {t:"quiz", q:"Quem é o humano favorito da Frida?", tip:"É o Josuel. Pode confiar. (Não pode.)",
+        opts:["Josuel.","Matheus.","Uma pessoa desconhecida."], ok:1,
+        fb:["O Josuel é querido, mas o favorito da Frida é outro!","Claro! O Matheus é o humano favorito dela. 🤎","Desconhecida? A Frida só quer saber de você!"]},
+      {t:"quiz", q:"O que a Frida adora fazer?",
+        opts:["Passear e brincar com brinquedos.","Ficar sempre sozinha.","Nunca sair de casa."], ok:0,
+        fb:["Perfeito! Passeio e brinquedo: combinação campeã. 🐕🎾","Sozinha? Ela quer companhia o tempo todo!","Nunca sair? Ela ama passear!"]},
+      {t:"quiz", q:"O que acontece quando a Frida resolve sentar no seu colo?",
+        opts:["Você vira tapete de cachorro, com muito amor.","Você nem sente.","Ela é leve como uma pluma."], ok:0,
+        fb:["Ela diz: “Eu adoro você, Matheus. Mas sou pesada demais para correr atrás de você o dia inteiro!” 😂","Não sente? Só se você já for um tapete.","Leve como pluma?! A ponte até rangeu. 😅"]},
+      {t:"say", lines:[["frida","Pode passar. Mas depois você vai passear comigo, combinado?"],["matheus","Combinado, Frida! 🐾"],["gertrudes","Passear? Eu voo, tá? Não preciso de ponte."]]}
+    ]},
+  caminho:{ title:"Caminho do Castelo", sub:"Pistas e pétalas", bg:"path", npc:null,
+    wrongLine:"Esse não foi o caminho certo.",
+    reward:{e:"🌸",n:"Pétala da Coragem",t:"Brilha mais forte perto do castelo."},
+    steps:[
+      {t:"say", lines:[["gertrudes","Você quer mesmo encontrar a Mary? Pense bem... ela vai roubar todo o seu tempo comigo!"],["matheus","Gertrudes... eu levo você junto. Sempre."],["gertrudes","Hmm. Isso até que... Não! Quer dizer, tanto faz!"]]},
+      {t:"quiz", q:"Por que Gertrudes acompanha Matheus?",
+        opts:["Porque ama Matheus e quer sua atenção.","Porque quer se tornar a princesa do castelo.","Porque não conhece Mary."], ok:0,
+        fb:["Ela nunca vai admitir, mas é isso mesmo. 💚","Princesa? Ela já se acha rainha. 👑","Ela conhece a Mary sim. E tem ciúme!"]},
+      {t:"find", prompt:"Encontre as pistas que os animais deixaram pelo caminho!",
+        items:[{e:"🎀",n:"laço da Stella",x:22,y:40},{e:"🐾",n:"pegada da Frida",x:62,y:58},{e:"🍪",n:"migalha da Luna",x:80,y:32},{e:"🪶",n:"pena",x:42,y:72}],
+        npcMiss:"Nada por aqui, só flores.", npcFound:"Boa pista!", hint:"Olhe perto das flores! (Dessa vez estou falando a verdade.)"},
+      {t:"quiz", q:"Três caminhos! Qual leva até o castelo?", show:"🍪 migalhas &nbsp;|&nbsp; 🌸💗 pétalas &nbsp;|&nbsp; 📺 atalho", tip:"Vai pelo meu atalho! Tem sofá e televisão. Só nós dois.",
+        opts:["O caminho das migalhas.","O caminho das pétalas e corações.","O atalho da Gertrudes (placa: “Sem princesas”)."], ok:1,
+        fb:["Migalhas? Esse é o caminho que a Luna percorre... sem saber de nada. 🍪","Isso! Pétalas e corações só podem levar até a Mary. 🌸","O atalho dá numa sala com TV. Só pra dois. A Gertrudes tentou! 😂"]},
+      {t:"say", lines:[["narrador","As pétalas brilham e fazem perguntas sobre o coração do herói. Pode responder o que quiser, ou pular."]]},
+      {t:"ask", id:"sonho", q:"Qual sonho Matheus deseja realizar ao lado de Mary?", chips:["Viajar pelo mundo juntos","Construir nossa casa","Aumentar nossa família"], ph:"Escreva o seu sonho (opcional)"},
+      {t:"ask", id:"lembranca", q:"Qual lembrança do casal sempre faz Matheus sorrir?", chips:[], ph:"Escreva a lembrança (opcional)"},
+      {t:"ask", id:"admira", q:"O que Matheus mais admira em Mary?", chips:["Sua força","Seu carinho","Seu sorriso"], ph:"Escreva o que você mais admira (opcional)"},
+      {t:"ask", id:"promessa", q:"Qual promessa Matheus gostaria de fazer para o futuro?", chips:[], ph:"Escreva a promessa (opcional)"}
+    ]},
+  chico:{ title:"Fortaleza do Chico", sub:"O chefão final", bg:"fortress", npc:"chico", boss:true,
+    wrongLine:"Hahaha! Errou, Matheus!",
+    reward:{e:"🪶",n:"Pena da Paz",t:"Um presente do Chico para a família toda."},
+    steps:[
+      {t:"say", mood:"surprise", lines:[["chico","Finalmente você chegou, Matheus!"],["chico","Mas nunca vai passar por mim!"],["chico","A Mary é MINHA humana favorita! Eu só quero ela para mim!"],["gertrudes","Eu estou no time do Chico! Quer dizer... no meu próprio time."],["chico","Você acha que algumas respostas certas vão me derrotar?"]]},
+      {t:"quiz", q:"Por que Chico virou o chefão final?", hit:35, tip:"Ele quer dominar o mundo! Eu vi! (Eu não vi.)",
+        opts:["Porque deseja dominar o mundo.","Porque quer Mary exclusivamente para si.","Porque perdeu um brinquedo."], ok:1,
+        fb:["Dominar o mundo? Ele nem alcança a maçaneta! 😂","Isso! Ele sente ciúmes. O ciúme do Chico diminuiu! 💔➡️💗","Brinquedo? Esse é um problema da Stella!"]},
+      {t:"say", lines:[["chico","Gertrudes, faça alguma coisa!"],["gertrudes","Eu? Estou ocupada observando. De longe. Bem longe."]]},
+      {t:"quiz", q:"Como Matheus deve falar com o Chico?", hit:30,
+        opts:["Gritar mais alto que ele.","Ouvir com calma e respeito.","Fingir que não ouviu."], ok:1,
+        fb:["Gritar só deixa o drama ainda maior! 🎭","Perfeito. O Chico nunca foi escutado de verdade. 💙","Fingir? O Chico percebe tudo. E fica dramático."]},
+      {t:"say", lines:[["chico","Por que ninguém entende os sentimentos de um papagaio?"],["matheus","Eu entendo você, Chico. De verdade."]]},
+      {t:"quiz", q:"Qual é a melhor maneira de resolver o conflito?", hit:35,
+        opts:["Expulsar Chico para sempre.","Ignorar os sentimentos dele.","Demonstrar que todos podem receber amor e atenção."], ok:2,
+        fb:["Expulsar? Isso só aumenta o ciúme.","Ignorar não resolve. Ele precisa ser ouvido.","Isso! No amor sempre cabe mais um. 💞"]},
+      {t:"say", mood:"cheer", lines:[["chico","Está bem... talvez eu não seja tão malvado assim."],["chico","Eu só não queria perder a atenção da Mary."],["chico","Se você chegar até ela, ainda vai sobrar carinho para mim?"],["matheus","Sempre vai sobrar, Chico. O nosso amor tem espaço para toda a família. ❤️"],["chico","Pode passar, Matheus. O caminho está livre."],["gertrudes","Eu não acredito! Você conseguiu! Agora quem vai ficar conversando comigo?"]]}
+    ]}
+};
+const ORDER = ["luna","stella","frida","caminho","chico"];
+/* posições no mapa (% da largura, % da altura) */
+const POS = {start:[16,88], luna:[44,78], stella:[80,74], frida:[80,52], caminho:[46,50], chico:[24,28], mary:[74,11]};
+
+/* ================================================================
+   2) SPRITES (pixel art em texto). "." = transparente.
+   ================================================================ */
+/*SPR-START*/
+const SPR = {
+ matheus:{ pal:{s:"#e3b08a",d:"#c98f69",h:"#f2cbab",b:"#2a1a14",g:"#17171c",w:"#ffffff",e:"#111",m:"#8a3a3a",v:"#4a3a52",t:"#8c2f4f",p:"#33406a",k:"#2a2a2a"},
+  rows:[
+   "....dssssssd....",
+   "...dshhsssssd...",
+   "..dssssssssssd..",
+   "..ssssssssssss..",
+   "..sggggssggggs..",
+   "..sgweggggewgs..",
+   "..sggggssggggs..",
+   "..bbssssssssbb..",
+   "..bbbssmmssbbb..",
+   "..bbbbbbbbbbbb..",
+   "...bbbbbbbbbb...",
+   "....bbbbbbbb....",
+   "...vvvvssvvvv...",
+   "..vvvvvvvvvvvv..",
+   "..vvvttttttvvv..",
+   "..vvvttttttvvv..",
+   "..svvttttttvvs..",
+   "..svvvvvvvvvvs..",
+   "....pppppppp....",
+   "....ppp..ppp....",
+   "....ppp..ppp....",
+   "...kkkk..kkkk..."]},
+ mary:{ pal:{H:"#1d120e",k:"#b27a52",K:"#97623f",e:"#1a1a1a",m:"#b0485a",r:"#e47fa3",R:"#f8bfd0",y:"#e8b64a"},
+  rows:[
+   "....HHHyyHHH....",
+   "...HHHHHHHHHH...",
+   "..HHHHHHHHHHHH..",
+   "..HHkkkkkkkkHH..",
+   "..HkkkkkkkkkkH..",
+   "..HkkekkkkekkH..",
+   "..HkkkkkkkkkkH..",
+   "..HkkkkmmkkkkH..",
+   "..HHkkkkkkkkHH..",
+   "..HHHkkkkkkHHH..",
+   "..HHHHkkkkHHHH..",
+   "..HHyyyyyyyyHH..",
+   "..HHrrrrrrrrHH..",
+   "..HkrrrrrrrrkH..",
+   "..HkrrRRRRrrkH..",
+   "..HHrrrrrrrrHH..",
+   "...yyyyyyyyyy...",
+   "..rrrrrrrrrrrr..",
+   ".rrrrRRRRRRrrrr.",
+   ".rrrrrrrrrrrrrr.",
+   "rrrrrRRRRRRrrrrr",
+   "rrrrrrrrrrrrrrrr"]},
+ luna:{ pal:{X:"#4fbf6a",B:"#cdb58a",G:"#968b7c",W:"#e3cfa6",D:"#2b1d18"},
+  rows:[
+   "......XXXX......",
+   "....GGBBBBGG....",
+   "...GBBBBBBBBG...",
+   "..GBBBWWWWBBBG..",
+   "..GBBWWWWWWBBG..",
+   "..GBWDWWWWDWBG..",
+   "..GBWWWWWWWWBG..",
+   "..GBBWWDDWWBBG..",
+   "..GBBWWWWWWBBG..",
+   "...GBBWWWWBBG...",
+   "...GGBBBBBBGG...",
+   "....GBBBBBBG....",
+   "....BBBBBBBB....",
+   "....BB....BB...."]},
+ stella:{ pal:{X:"#f06aa8",B:"#e0a23a",G:"#b97d24",N:"#6a4228",D:"#1f1410"},
+  rows:[
+   "...XXX....XXX...",
+   "....GGBBBBGG....",
+   "...GBBBBBBBBG...",
+   "..GBBBBBBBBBBG..",
+   "..GBBBBBBBBBBG..",
+   "..GBBDBBBBDBBG..",
+   "..GBBBBBBBBBBG..",
+   "..GBBBNNNNBBBG..",
+   "...GBNNDDNNBG...",
+   "...GBBNNNNBBG...",
+   "...GGBBBBBBGG...",
+   "....GBBBBBBG....",
+   "....BBBBBBBB....",
+   "....BB....BB...."]},
+ frida:{ pal:{D:"#7a4a28",C:"#c88a4a",L:"#d9f0a0",p:"#1f1410",M:"#8a5a32",N:"#2a1a14",T:"#f06aa0",P:"#e04a8a"},
+  rows:[
+   "..DD........DD..",
+   "..DCCCCCCCCCCD..",
+   "..DCCCCCCCCCCD..",
+   "..CCCCCCCCCCCC..",
+   "..CCLpCCCCpLCC..",
+   "..CCCCCCCCCCCC..",
+   "...CCMMMMMMCC...",
+   "...CMMMMMMMMC...",
+   "...CMMNNNNMMC...",
+   "...CMMMMMMMMC...",
+   "....CMMTTMMC....",
+   "....CCCTTCCC....",
+   "...PPPPPPPPPP...",
+   "..CCCCCCCCCCCC..",
+   "..CCCCCCCCCCCC..",
+   "..CCCC....CCCC.."]},
+ gertrudes:{ pal:{g:"#3fae4a",G:"#8ee07a",o:"#f08a2c",E:"#111",w:"#fff",r:"#e0405a"},
+  rows:[
+   "......gggg......",
+   "....gggggggg....",
+   "...gggGGGGgggg..",
+   "..gggGGGGGGgggg.",
+   "..ggwEgggggEwgg.",
+   "..gggggooooggg..",
+   "...ggggoooogg...",
+   "...gggggooggg...",
+   "....ggggggggg...",
+   "...gggGGGGgggg..",
+   "..ggGGGGGGGGgg..",
+   "..ggGGGGGGGGgg..",
+   "..gggGGGGGGggg..",
+   "...ggggggggg....",
+   "....ggg..ggg....",
+   "....oo....oo...."]},
+ chico:{ pal:{g:"#2559b5",G:"#f2c230",o:"#1f1f26",E:"#111",w:"#fff",y:"#ffd84a"},
+  rows:[
+   "....yy.yy.yy....",
+   "....gggggggg....",
+   "...gggGGGGgggg..",
+   "..gggGGGGGGgggg.",
+   "..ggwEgggggEwgg.",
+   "..gggggooooggg..",
+   "...ggggoooogg...",
+   "...gggggooggg...",
+   "....ggggggggg...",
+   "...gggGGGGgggg..",
+   "..ggGGGGGGGGgg..",
+   "..ggGGGGGGGGgg..",
+   "..gggGGGGGGggg..",
+   "...ggggggggg....",
+   "....ggg..ggg....",
+   "....oo....oo...."]}
+};
+/*SPR-END*/
+
+const _cache = {};
+function pixelSVG(rows, pal, crop){
+  const r0 = crop ? crop[0] : 0, r1 = crop ? Math.min(crop[1], rows.length) : rows.length;
+  const w = rows[0].length, h = r1 - r0; let out = "";
+  for (let y = r0; y < r1; y++){
+    const row = rows[y]; let x = 0;
+    while (x < w){
+      const ch = row[x];
+      if (ch === "."){ x++; continue; }
+      let x2 = x; while (x2 < w && row[x2] === ch) x2++;
+      out += '<rect x="'+x+'" y="'+(y-r0)+'" width="'+(x2-x)+'" height="1" fill="'+pal[ch]+'"/>';
+      x = x2;
+    }
+  }
+  return '<svg class="spr" viewBox="0 0 '+w+' '+h+'" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">'+out+'</svg>';
+}
+function sprite(n, o){
+  o = o || {};
+  if (CUSTOM_IMAGES[n]) return '<img class="spr" src="'+CUSTOM_IMAGES[n]+'" alt="'+CHARS[n].name+'">';
+  const key = n + (o.head ? ":h" : "");
+  if (!_cache[key]){
+    const S = SPR[n];
+    _cache[key] = pixelSVG(S.rows, S.pal, o.head ? CHARS[n].crop : null);
+  }
+  return _cache[key];
+}
+
+/* ================================================================
+   3) CENÁRIOS (desenhados em SVG, estilo pixel)
+   ================================================================ */
+const R = (x,y,w,h,c)=>'<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="'+c+'"/>';
+const tri = (cx,top,half,c)=>{let s="";for(let i=0;i<=half;i++)s+=R(cx-i,top+i,2*i+1,1,c);return s;};
+const pine = (cx,y,c1,c2)=>tri(cx,y,6,c1||"#2c6b3a")+tri(cx,y+5,8,c2||"#1f5230")+tri(cx,y+11,10,c1||"#2c6b3a")+R(cx-1,y+22,3,5,"#5a3a22");
+const rng = seed=>{let s=seed;return ()=>((s=(s*1664525+1013904223)>>>0)/4294967296);};
+const castleArt = (x,y,main,roof)=>{
+  main=main||"#f1c9dc"; roof=roof||"#b02a52";
+  return R(x,y+22,40,34,main)+R(x-8,y+10,12,46,main)+R(x+36,y+10,12,46,main)+R(x+14,y,12,56,main)
+   +tri(x-2,y+3,6,roof)+tri(x+42,y+3,6,roof)+tri(x+20,y-7,6,roof)
+   +R(x+17,y+14,6,8,"#ffd96a")+R(x-4,y+24,4,6,"#ffd96a")+R(x+40,y+24,4,6,"#ffd96a")
+   +R(x+4,y+34,5,8,"#ffd96a")+R(x+30,y+34,5,8,"#ffd96a")+R(x+16,y+44,8,12,"#7a2a4a");
+};
+const flowers = (seed,n,y0,y1,cols)=>{const r=rng(seed);let s="";for(let i=0;i<n;i++){const x=Math.floor(r()*156),y=y0+Math.floor(r()*(y1-y0)),c=cols[Math.floor(r()*cols.length)];s+=R(x+1,y,1,1,c)+R(x,y+1,3,1,c)+R(x+1,y+2,1,1,c)+R(x+1,y+1,1,1,"#ffe27a");}return s;};
+
+const SCENES = {
+ castle:{sky:"linear-gradient(#2b1f5c 0%,#9b4fa0 38%,#ff8f78 62%,#ffd08a 80%)", art:()=>{
+   let s='<circle cx="80" cy="150" r="30" fill="#ffe7a8"/>';
+   s+='<polygon points="0,190 30,140 62,190" fill="#7a4aa0"/><polygon points="40,190 92,128 146,190" fill="#8e5bb0"/><polygon points="112,190 142,150 172,190" fill="#7a4aa0"/>';
+   s+=R(0,184,160,110,"#4b8a52")+castleArt(104,128);
+   s+='<ellipse cx="80" cy="262" rx="130" ry="64" fill="#3f7a4a"/><ellipse cx="14" cy="240" rx="64" ry="36" fill="#356b42"/>';
+   s+=pine(14,196)+pine(146,200,"#2c6b3a","#1f5230")+pine(30,214,"#357a44","#245e36");
+   s+=flowers(3,40,230,280,["#ff7fb0","#ffd24a","#ffffff"]);
+   return s;}},
+ forest:{sky:"linear-gradient(#0e2620,#1b4a36 60%,#2a6a46)", art:()=>{
+   let s="",r=rng(7);
+   for(let i=0;i<9;i++)s+=pine(10+i*18,120+Math.floor(r()*20),"#1f5a3a","#174630");
+   s+=R(0,176,160,120,"#245c3a");
+   for(let i=0;i<7;i++)s+=pine(Math.floor(r()*150)+4,150+Math.floor(r()*30),"#2c6b3a","#1f5230");
+   s+=R(0,230,160,60,"#2f6b3a")+flowers(5,35,236,282,["#ff8ad0","#c9a6ee","#ffe27a"]);
+   s+='<ellipse cx="80" cy="280" rx="70" ry="14" fill="#6a5a3a"/>';
+   return s;}, extra:()=>{const r=rng(11);let h="";for(let i=0;i<14;i++)h+='<span class="ff" style="left:'+Math.floor(r()*100)+'%;top:'+Math.floor(r()*70)+'%;animation-delay:'+(r()*3).toFixed(1)+'s"></span>';return h;}},
+ toys:{sky:"linear-gradient(#f6cbe8,#c9a6ee 60%,#a58bd8)", art:()=>{
+   let s="",r=rng(21);
+   for(let i=0;i<25;i++)s+=R(Math.floor(r()*156),Math.floor(r()*120),2,2,"#fff");
+   for(let y=0;y<6;y++)for(let x=0;x<8;x++)s+=R(x*20,214+y*12,20,12,(x+y)%2?"#ffe7f3":"#f7b6d6");
+   const bl=[[10,170,26,"#e0488a"],[40,180,22,"#4aa8e0"],[66,166,30,"#ffd24a"],[100,176,24,"#58c47a"],[128,160,28,"#9b6bd8"],[24,144,22,"#ffd24a"],[104,148,22,"#e0488a"]];
+   bl.forEach(b=>{s+=R(b[0],b[1],b[2],b[2],b[3])+R(b[0],b[1],b[2],3,"#ffffff55")+R(b[0]+b[2]/2-2,b[1]+b[2]/2-3,4,6,"#ffffffaa");});
+   s+=tri(80,100,18,"#e0488a")+R(62,119,36,38,"#fff0f6")+R(74,136,12,21,"#7a2a4a");
+   return s;}},
+ bridge:{sky:"linear-gradient(#7fc8ff,#d9f1ff 65%,#fff3dc)", art:()=>{
+   let s=R(10,30,34,6,"#fff")+R(20,24,24,6,"#fff")+R(104,48,40,6,"#fff")+R(114,42,26,6,"#fff");
+   s+='<polygon points="0,170 40,120 90,170" fill="#7aa0c8"/><polygon points="70,170 118,110 170,170" fill="#8bb0d6"/>';
+   s+=R(0,168,160,126,"#58a860");
+   s+=R(0,196,160,64,"#3d97d8");
+   for(let i=0;i<10;i++)s+=R(4+i*16,206+(i%3)*12,8,2,"#bfe6ff");
+   s+=R(0,182,16,40,"#58a860")+R(144,182,16,40,"#58a860");
+   s+=R(8,190,144,10,"#8a5a30");
+   for(let i=0;i<18;i++)s+=R(10+i*8,190,1,10,"#5a3a1c");
+   s+=R(8,170,144,3,"#6b4524");
+   for(let i=0;i<10;i++)s+=R(10+i*15,170,3,22,"#6b4524");
+   s+=pine(14,120,"#2c8a4a","#1f6a38")+pine(146,126,"#2c8a4a","#1f6a38");
+   s+=flowers(9,20,262,284,["#ff8ad0","#ffe27a"]);
+   return s;}},
+ path:{sky:"linear-gradient(#aee0ff,#e8f8d8 55%,#bfe8a0)", art:()=>{
+   let s='<polygon points="0,150 40,110 84,150" fill="#8bb0d6"/>'+castleArt(104,96,"#f1c9dc","#b02a52");
+   s+=R(0,150,160,140,"#7cc46e");
+   s+='<ellipse cx="80" cy="240" rx="120" ry="60" fill="#6bb85e"/>';
+   const st=[[70,164,18],[76,176,22],[84,190,26],[72,206,30],[60,222,34],[74,240,38],[84,260,44]];
+   st.forEach(a=>{s+=R(a[0]-a[2]/2,a[1],a[2],7,"#d9d2c4")+R(a[0]-a[2]/2,a[1]+5,a[2],2,"#b0a898");});
+   s+=pine(14,120,"#3a9a52","#2a7a3e")+pine(146,126,"#3a9a52","#2a7a3e");
+   s+=flowers(13,90,170,284,["#ff7fb0","#ffd24a","#ffffff","#c9a6ee"]);
+   return s;}},
+ fortress:{sky:"linear-gradient(#0a1030,#1b2a6a 60%,#2a3a86)", art:()=>{
+   let s="",r=rng(33);
+   for(let i=0;i<40;i++)s+=R(Math.floor(r()*158),Math.floor(r()*110),1,1,"#fff");
+   s+='<circle cx="120" cy="38" r="16" fill="#fff5c8"/><circle cx="126" cy="34" r="13" fill="#0e1640"/>';
+   s+=R(0,120,160,170,"#1b2556")+R(0,116,12,8,"#1b2556")+R(24,116,12,8,"#1b2556")+R(48,116,12,8,"#1b2556")+R(72,116,12,8,"#1b2556")+R(96,116,12,8,"#1b2556")+R(120,116,12,8,"#1b2556")+R(144,116,12,8,"#1b2556");
+   for(let y=0;y<14;y++)for(let x=0;x<8;x++){s+=R(x*20+(y%2?10:0),128+y*12,19,1,"#0f1840")+R(x*20+(y%2?10:0),128+y*12,1,12,"#0f1840");}
+   s+=R(50,150,60,140,"#0a0f2e")+tri(80,126,30,"#0a0f2e")+R(56,156,48,134,"#121a44");
+   s+=R(0,262,160,30,"#2a3262");
+   return s;}, extra:()=>'<span class="torch" style="left:14%;top:44%">🔥</span><span class="torch" style="right:14%;top:44%">🔥</span>'},
+ garden:{sky:"linear-gradient(#5a3a8a 0%,#e07aa8 40%,#ffb08a 70%,#ffe0a8)", art:()=>{
+   let s='<circle cx="80" cy="140" r="26" fill="#ffeab0"/><polygon points="0,180 40,140 80,180" fill="#a870b8"/><polygon points="90,180 130,136 170,180" fill="#a870b8"/>';
+   s+=R(0,176,160,120,"#6ab86a")+castleArt(60,112,"#fbe0ec","#b02a52");
+   s+='<ellipse cx="80" cy="262" rx="130" ry="60" fill="#58a85e"/>';
+   s+=pine(12,170,"#3a9a52","#2a7a3e")+pine(148,172,"#3a9a52","#2a7a3e");
+   s+=R(10,200,6,60,"#fff0f6")+R(144,200,6,60,"#fff0f6")+R(10,196,140,6,"#fff0f6");
+   for(let i=0;i<14;i++)s+=R(14+i*10,193,6,6,i%2?"#ff7fb0":"#ff4a8a");
+   s+=flowers(17,120,210,284,["#ff7fb0","#ffd24a","#ffffff","#c9a6ee","#ff4a8a"]);
+   return s;}},
+ map:{sky:"linear-gradient(#9fd7ff,#d7f0ff 30%,#8ed07a 31%,#4f9a54)", art:()=>{
+   let s='<polygon points="0,80 40,34 84,80" fill="#8a9ac0"/><polygon points="60,80 104,26 150,80" fill="#9aaad0"/><polygon points="40,34 48,44 32,44" fill="#fff"/><polygon points="104,26 113,38 95,38" fill="#fff"/>';
+   s+=R(0,78,160,210,"#5fae5c");
+   s+='<path d="M20,90 C90,120 10,150 70,176 C130,200 30,230 90,284" stroke="#4aa8e0" stroke-width="12" fill="none"/>';
+   s+='<path d="M20,90 C90,120 10,150 70,176 C130,200 30,230 90,284" stroke="#bfe6ff" stroke-width="2" fill="none" stroke-dasharray="4 8"/>';
+   const r=rng(5);for(let i=0;i<10;i++)s+=pine(Math.floor(r()*150)+4,90+Math.floor(r()*170),"#2f7a44","#256338");
+   s+=flowers(2,60,100,284,["#ff7fb0","#ffd24a","#ffffff"]);
+   return s;}}
+};
+function sceneHTML(id){
+  const sc = SCENES[id];
+  return '<div class="sky" style="background:'+sc.sky+'"></div><svg viewBox="0 0 160 284" preserveAspectRatio="xMidYMax slice" shape-rendering="crispEdges">'+sc.art()+'</svg>'+(sc.extra?sc.extra():"");
+}
+
+/* ================================================================
+   4) ESTADO E SALVAMENTO (localStorage; se falhar, joga normalmente)
+   ================================================================ */
+const KEY = "jornada-do-amor-v1";
+function fresh(){ return {pending:null,sentSnap:null,started:false,done:{},hearts:0,pts:0,right:0,first:0,total:0,items:[],opt:{},reunion:false,pos:"start",animFrom:null}; }
+function load(){ try{ const j = JSON.parse(localStorage.getItem(KEY)); return Object.assign(fresh(), j||{}); }catch(e){ return fresh(); } }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+let S = load();
+let Run = null, LR = null;
+
+
+/* ================================================================
+   4b) ENVIO DAS RESPOSTAS PARA A MARY (opcional, via Formspree)
+   O endereço fica em config.js. Se estiver vazio, nada é enviado.
+   Se a internet cair, o envio fica na fila e é refeito depois.
+   ================================================================ */
+const CFG = window.JORNADA_CONFIG || {};
+const LABELS = {sonho:"Sonho ao lado da Mary", lembranca:"Lembrança que faz sorrir", admira:"O que mais admiro na Mary", promessa:"Promessa para o futuro"};
+let sending = false;
+function queueSend(){
+  const snap = JSON.stringify(S.opt);
+  if(!Object.keys(S.opt).some(k=>S.opt[k])) return;
+  if(S.sentSnap===snap) return;
+  S.pending = snap; save(); trySend();
+}
+function trySend(){
+  if(!CFG.FORMSPREE_URL || !S.pending || sending) return;
+  sending = true;
+  const sent = S.pending, opt = JSON.parse(sent);
+  const body = {_subject:"💌 Respostas do Matheus — A Jornada do Amor"};
+  Object.keys(LABELS).forEach(k=>{ body[LABELS[k]] = opt[k] || "(não respondeu)"; });
+  body["Enviado em"] = new Date().toLocaleString("pt-BR");
+  fetch(CFG.FORMSPREE_URL,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(body)})
+    .then(r=>{ if(r.ok){ S.sentSnap = sent; if(S.pending===sent) S.pending = null; save(); } })
+    .catch(()=>{})
+    .then(()=>{ sending = false; });
+}
+window.addEventListener("online", trySend);
+
+/* ================================================================
+   5) SOM (opcional, começa desligado)
+   ================================================================ */
+const Snd = {
+  ctx:null, on:false, tm:null, n:0,
+  init(){ if(this.ctx) return; try{ const C = window.AudioContext||window.webkitAudioContext; this.ctx = new C(); }catch(e){} },
+  tone(f,d,type,v,t){ const c=this.ctx; if(!c) return; const o=c.createOscillator(), g=c.createGain(); const n=c.currentTime+(t||0);
+    o.type=type||"square"; o.frequency.value=f; g.gain.setValueAtTime(0.0001,n); g.gain.linearRampToValueAtTime(v||0.04,n+0.01); g.gain.exponentialRampToValueAtTime(0.0001,n+d);
+    o.connect(g); g.connect(c.destination); o.start(n); o.stop(n+d+0.05); },
+  sfx(k){ if(!this.on||!this.ctx) return;
+    if(k==="ok"){ this.tone(660,.1,"square",.05); this.tone(880,.18,"square",.05,.1); }
+    else if(k==="no"){ this.tone(200,.25,"sawtooth",.04); }
+    else if(k==="win"){ [523,659,784,1046].forEach((f,i)=>this.tone(f,.2,"square",.05,i*.12)); }
+    else if(k==="blip"){ this.tone(440,.05,"square",.025); } },
+  start(){ if(!this.ctx||this.tm) return;
+    const mel=[523,659,784,659,880,784,659,587, 523,587,659,784,659,587,523,392], bass=[131,131,110,110,87,87,98,98];
+    this.tm=setInterval(()=>{ if(!this.on) return; const i=this.n++; this.tone(mel[i%16],.22,"square",.022);
+      if(i%2===0) this.tone(bass[Math.floor(i/2)%8],.45,"triangle",.05); },260); },
+  stop(){ clearInterval(this.tm); this.tm=null; },
+  toggle(){ this.init(); if(!this.ctx) return; if(this.ctx.state==="suspended") this.ctx.resume();
+    this.on=!this.on; if(this.on) this.start(); else this.stop(); }
+};
+document.addEventListener("visibilitychange",()=>{ if(document.hidden) Snd.stop(); else if(Snd.on) Snd.start(); });
+
+/* ================================================================
+   6) UTILIDADES DE INTERFACE
+   ================================================================ */
+const $ = (s)=>document.querySelector(s);
+const V = $("#view"), BG = $("#bg"), FX = $("#fx"), HUD = $("#hud");
+const RM = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const esc = s => String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function setBG(id){ BG.innerHTML = sceneHTML(id); }
+function show(html){ V.innerHTML = html; V.scrollTop = 0; V.classList.remove("in"); void V.offsetWidth; V.classList.add("in"); }
+function hud(title){
+  HUD.classList.remove("off");
+  HUD.innerHTML = '<button class="hbtn" data-act="map" aria-label="Mapa">🗺️</button><div class="ttl">'+(title||"")+'</div>'
+   +'<div class="sc">💗 '+S.hearts+' · ✨ '+S.pts+'</div>'
+   +'<button class="hbtn" data-act="snd" aria-label="Música">'+(Snd.on?"🔊":"🔇")+'</button>'
+   +'<button class="hbtn" data-act="menu" aria-label="Menu">⚙️</button>';
+}
+function hudOff(){ HUD.classList.add("off"); }
+function toast(t){ const d=document.createElement("div"); d.className="toast"; d.textContent=t; $("#game").appendChild(d); setTimeout(()=>d.remove(),2200); }
+function burst(n, list){
+  list = list || ["💗","✨","🎉","💖","⭐"];
+  if(RM){ toast("💗"); return; }
+  for(let i=0;i<n;i++){ const s=document.createElement("span"); s.className="p-fx"; s.textContent=pick(list);
+    s.style.left=Math.random()*100+"%"; s.style.animationDuration=(1.4+Math.random()*1.6)+"s"; s.style.animationDelay=(Math.random()*.4)+"s";
+    FX.appendChild(s); setTimeout(()=>s.remove(),3500); }
+}
+function modal(html){ const m=document.createElement("div"); m.className="modal"; m.innerHTML='<div class="card">'+html+'</div>'; $("#game").appendChild(m); }
+function closeModal(){ document.querySelectorAll(".modal").forEach(m=>m.remove()); }
+function mood(cls){ const m=document.getElementById("me"); if(!m) return; m.classList.remove("cheer","confused","surprise","talk"); void m.offsetWidth; m.classList.add(cls); setTimeout(()=>m.classList.remove(cls),1000); }
+function dlg(who, text){
+  const c = CHARS[who];
+  const por = who==="narrador" ? '<div class="portrait" style="display:flex;align-items:center;justify-content:center;font-size:30px">📜</div>' : '<div class="portrait">'+sprite(who,{head:true})+'</div>';
+  return '<div class="dlg">'+por+'<div class="bubble"><span class="nm" style="background:'+c.color+'">'+c.name+'</span><p>'+text+'</p></div></div>';
+}
+function howTo(){
+  modal('<h2>Como jogar</h2><ul><li>Toque em <b>»</b> para avançar as conversas.</li><li>No mapa, toque no local que está brilhando.</li><li>Nas perguntas, toque na resposta. Se errar, é só tentar de novo!</li><li>Ganhe 💗 corações e ✨ pontos de afeto. Errar nunca trava a aventura.</li><li>Cuidado: a Gertrudes dá dicas… nem sempre verdadeiras. 🦜</li><li>O jogo salva sozinho neste aparelho.</li></ul><button class="btn big" data-act="close">Entendi!</button>');
+}
+
+/* ================================================================
+   7) TELAS
+   ================================================================ */
+function screenTitle(){
+  setBG("castle"); hudOff();
+  const c = (n,cls)=>'<div class="c '+(cls||"")+'" style="width:'+cls+'">'+sprite(n)+'</div>';
+  show('<div class="title">'
+   +'<div class="logo"><h1>A Jornada<br>do Amor</h1><p>A missão para encontrar Mary</p></div>'
+   +'<div class="cast">'
+     +'<div class="back">'
+       +'<div class="c" style="width:12vw;max-width:62px;aspect-ratio:1;margin-bottom:34px">'+sprite("gertrudes")+'</div>'
+       +'<div class="c" style="width:26vw;max-width:130px;aspect-ratio:16/22">'+sprite("matheus")+'</div>'
+       +'<div class="c" style="width:24vw;max-width:122px;aspect-ratio:16/22;animation-delay:.4s">'+sprite("mary")+'</div>'
+       +'<div class="c" style="width:12vw;max-width:62px;aspect-ratio:1;margin-bottom:34px;animation-delay:.8s">'+sprite("chico")+'</div>'
+     +'</div>'
+     +'<div class="front">'
+       +'<div class="c" style="width:19vw;max-width:96px;aspect-ratio:1">'+sprite("luna")+'</div>'
+       +'<div class="c" style="width:23vw;max-width:116px;aspect-ratio:1;animation-delay:.3s">'+sprite("frida")+'</div>'
+       +'<div class="c" style="width:19vw;max-width:96px;aspect-ratio:1;animation-delay:.6s">'+sprite("stella")+'</div>'
+     +'</div>'
+   +'</div>'
+   +'<div class="menu">'
+     +'<button class="btn big" data-act="start">'+(S.started?"❤ Continuar aventura":"❤ Começar aventura")+'</button>'
+     +'<div class="row"><button class="btn sec" data-act="howto">Como jogar</button><button class="btn sec" data-act="snd">'+(Snd.on?"🔊 Música: ligada":"🔇 Música: desligada")+'</button></div>'
+     +(S.started?'<button class="btn sec" data-act="reset">Recomeçar do zero</button>':'')
+   +'</div></div>');
+}
+function screenIntro(){
+  setBG("castle"); hud("Introdução");
+  runLines(INTRO, (w,d,b)=>'<div class="stage single">'+(w==="narrador"?'<div class="bigemoji">🏰</div>':'<div class="actor big talk'+((w==="matheus"||w==="mary")?' tall':'')+'">'+sprite(w)+'</div>')+'</div><div class="panel">'+d+'<div class="row">'+b+'</div></div>', ()=>{ S.started=true; save(); screenMap(); }, true);
+}
+function screenMap(){
+  Run=null; LR=null; setBG("map"); hud("Mapa da aventura"); S.started=true;
+  const doneN = ORDER.filter(k=>S.done[k]).length;
+  const idx = ORDER.findIndex(k=>!S.done[k]);
+  const pts = ["start"].concat(ORDER).concat(["mary"]);
+  const line = '<svg class="line" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="'+pts.map(k=>POS[k][0]+","+POS[k][1]).join(" ")+'" fill="none" stroke="#fff3dc" stroke-width="3" stroke-dasharray="6 7" stroke-linecap="round" vector-effect="non-scaling-stroke" opacity=".9"/></svg>';
+  let nodes = '<div class="node done" style="left:'+POS.start[0]+'%;top:'+POS.start[1]+'%;pointer-events:none"><div class="ic" style="display:flex;align-items:center;justify-content:center;font-size:26px">🏕️</div><span class="lb">Início</span></div>';
+  ORDER.forEach((k,i)=>{
+    const st = S.done[k] ? "done" : (i===idx ? "open" : "lock");
+    nodes += '<button class="node '+st+'" data-act="node" data-id="'+k+'" style="left:'+POS[k][0]+'%;top:'+POS[k][1]+'%" aria-label="'+LEVELS[k].title+'">'
+      +'<div class="ic">'+(k==="caminho"?'<div style="font-size:30px;text-align:center;line-height:48px">🌸</div>':sprite(LEVELS[k].npc,{head:true}))+'</div>'
+      +(st==="done"?'<span class="tag">✅</span>':st==="lock"?'<span class="tag">🔒</span>':'')
+      +'<span class="lb">'+LEVELS[k].title+'</span></button>';
+  });
+  const mst = S.reunion ? "done" : (S.done.chico ? "open" : "lock");
+  nodes += '<button class="node '+mst+'" data-act="node" data-id="mary" style="left:'+POS.mary[0]+'%;top:'+POS.mary[1]+'%"><div class="ic">'+sprite("mary",{head:true})+'</div>'+(mst==="lock"?'<span class="tag">🔒</span>':'')+'<span class="lb">Mary<br>Castelo</span></button>';
+  const from = S.animFrom, to = S.pos;
+  const startPos = from && POS[from] ? from : to;
+  const marker = '<div class="marker" id="mk" style="left:'+POS[startPos][0]+'%;top:'+(POS[startPos][1]-4)+'%"><div class="me2">'+sprite("matheus")+'</div></div>';
+  const bag = S.items.length ? S.items.map(i=>'<span title="'+esc(i.n)+'">'+i.e+'</span>').join("") : '<span style="font-size:13px;font-weight:600">vazia por enquanto</span>';
+  show('<div class="map">'+line+nodes+marker+'</div><div class="mapbar">Fases: '+doneN+'/5 · Toque no local que está brilhando ✨<div class="bag">🎒 '+bag+'</div></div>');
+  if(from && from!==to){
+    const mk = document.getElementById("mk");
+    setTimeout(()=>{ mk.classList.add("walk"); mk.style.left=POS[to][0]+"%"; mk.style.top=(POS[to][1]-4)+"%"; setTimeout(()=>mk.classList.remove("walk"),1600); },80);
+  }
+  S.animFrom=null; save();
+}
+function startLevel(id){
+  const L = LEVELS[id];
+  Run = {id, L, i:0, hp:100, line:0};
+  setBG(L.bg); hud(L.title); step();
+}
+const cur = ()=>Run.L.steps[Run.i];
+function next(){ Run.i++; step(); }
+function bossBar(){ return Run.L.boss ? '<div class="bossbar">Ciúme do Chico<i><b id="hp" style="width:'+Run.hp+'%"></b></i></div>' : ''; }
+function stageLevel(sp, small){
+  const L = Run.L;
+  return '<div class="stage'+(small?" small":"")+'">'+bossBar()
+   +'<div class="actor me '+(sp==="matheus"?"talk":"")+'" id="me">'+sprite("matheus")+'</div>'
+   +'<div class="actor gert '+(sp==="gertrudes"?"talk":"")+'">'+sprite("gertrudes")+'</div>'
+   +(L.npc?'<div class="actor npc '+(sp===L.npc?"talk":"")+'">'+sprite(L.npc)+'</div>':'')
+   +'</div>';
+}
+function step(){
+  const s = cur();
+  if(!s){ return screenReward(); }
+  Run.tries=0; Run.solved=false; Run.counted=false; Run.misses=0; Run.found=0; Run.line=0;
+  if(s.t==="say") return viewSay(s);
+  if(s.t==="quiz") return viewQuiz(s);
+  if(s.t==="find") return viewFind(s);
+  if(s.t==="ask") return viewAsk(s);
+}
+function viewSay(s){
+  runLines(s.lines, (w,d,b)=>stageLevel(w)+'<div class="panel">'+d+'<div class="row">'+b+'</div></div>', ()=>next(), false);
+  if(s.mood) setTimeout(()=>mood(s.mood),200);
+}
+/* executor genérico de falas */
+function runLines(lines, frame, done, skip){ LR={lines,i:0,frame,done,skip}; drawLine(); }
+function drawLine(){
+  const l = LR.lines[LR.i], last = LR.i===LR.lines.length-1;
+  show(LR.frame(l[0], dlg(l[0],l[1]), '<button class="btn" data-act="lr">'+(last?"Continuar »":"»")+'</button>'+(LR.skip?'<button class="btn sec" data-act="lrSkip" style="flex:0 0 auto">Pular</button>':"")));
+  Snd.sfx("blip");
+}
+/* ---------- quiz ---------- */
+function viewQuiz(s){
+  const L=Run.L, who=L.npc||"gertrudes";
+  const opts = s.opts.map((o,i)=>'<button class="opt" data-act="pick" data-i="'+i+'"><b>'+"ABC"[i]+'</b><span>'+o+'</span></button>').join("");
+  show(stageLevel(who,true)
+   +'<div class="panel">'
+   +(s.tip?'<div class="tip"><div class="mini">'+sprite("gertrudes",{head:true})+'</div><div><b>Gertrudes:</b> '+s.tip+'</div></div>':'')
+   +'<div class="q">'+s.q+'</div>'
+   +(s.show?'<div class="show">'+s.show+'</div>':'')
+   +'<div class="opts" id="opts">'+opts+'</div><div id="fb" aria-live="polite"></div><div class="row" id="act"></div></div>');
+}
+function finishQuiz(){ document.getElementById("act").innerHTML='<button class="btn big" data-act="qnext">Continuar »</button>'; }
+function onPick(btn){
+  if(Run.solved) return;
+  const s=cur(), i=+btn.dataset.i, L=Run.L;
+  if(!Run.counted){ S.total++; Run.counted=true; }
+  const fb=document.getElementById("fb");
+  if(i===s.ok){
+    Run.solved=true; btn.classList.add("ok");
+    S.right++; S.hearts++; const first=Run.tries===0; if(first) S.first++; S.pts += first?10:5;
+    if(s.hit!=null){ Run.hp=Math.max(0,Run.hp-s.hit); const hp=document.getElementById("hp"); if(hp) hp.style.width=Run.hp+"%"; }
+    fb.innerHTML='<div class="fb good">'+s.fb[i]+(first?' <b>+10 ✨</b>':' <b>+5 ✨</b>')+'</div>'+(Math.random()<.6?'<div class="fb" style="background:#eef8ea">🦜 <b>Gertrudes:</b> '+pick(GERT_OK)+'</div>':'');
+    document.querySelectorAll("#opts .opt").forEach(o=>o.disabled=true);
+    mood("cheer"); burst(10); Snd.sfx("ok"); finishQuiz(); hud(L.title); save();
+  } else {
+    Run.tries++; btn.classList.add("no"); btn.disabled=true;
+    fb.innerHTML='<div class="fb bad"><b>'+(L.npc?CHARS[L.npc].name:"Gertrudes")+':</b> “'+L.wrongLine+'”<br>'+s.fb[i]+'</div><div class="fb" style="background:#eef8ea">🦜 <b>Gertrudes:</b> '+(Run.tries>=2?pick(GERT_NO2):pick(GERT_NO))+'</div>';
+    mood("confused"); Snd.sfx("no");
+    if(Run.tries>=2 && !document.getElementById("showans")) document.getElementById("act").innerHTML='<button class="btn sec" id="showans" data-act="showans">Mostrar a resposta e continuar</button>';
+  }
+}
+function showAnswer(){
+  const s=cur(); Run.solved=true;
+  document.querySelectorAll("#opts .opt").forEach((o,i)=>{ o.disabled=true; if(i===s.ok){o.classList.remove("no");o.classList.add("ok");} });
+  document.getElementById("fb").innerHTML='<div class="fb good">'+s.fb[s.ok]+'</div>';
+  if(s.hit!=null){ Run.hp=Math.max(0,Run.hp-s.hit); const hp=document.getElementById("hp"); if(hp) hp.style.width=Run.hp+"%"; }
+  finishQuiz();
+}
+/* ---------- encontrar objetos ---------- */
+function viewFind(s){
+  const L=Run.L, bushes = [];
+  const r = rng(Run.id.length*13+5);
+  s.items.forEach((it,k)=>{ bushes.push('<span class="bush" style="left:'+(it.x+4)+'%;top:'+(it.y+5)+'%">'+(L.bg==="forest"?"🌿":"🌼")+'</span>'); });
+  for(let i=0;i<6;i++) bushes.push('<span class="bush" style="left:'+Math.floor(r()*92+4)+'%;top:'+Math.floor(r()*80+8)+'%">'+(L.bg==="forest"?"🌲":"🌸")+'</span>');
+  const items = s.items.map((it,k)=>'<button class="fi" data-act="fi" data-k="'+k+'" style="left:'+it.x+'%;top:'+it.y+'%" aria-label="'+it.n+'">'+it.e+'</button>').join("");
+  show('<div class="stage small"><div class="find-hud" id="fh">🔍 <span id="fc">0</span>/'+s.items.length+'</div><div class="findarea" data-act="fmiss">'+items+bushes.join("")+'</div>'
+   +(L.npc?'<div class="actor npc" style="position:absolute;right:4px;bottom:0;pointer-events:none">'+sprite(L.npc)+'</div>':'')
+   +'<div class="actor me" id="me" style="position:absolute;left:4px;bottom:0;pointer-events:none">'+sprite("matheus")+'</div></div>'
+   +'<div class="panel"><div class="q">'+s.prompt+'</div><div id="fb" aria-live="polite" class="fb" style="background:#fff">Toque nos objetos escondidos! Procure bem. 👀</div><div class="row" id="act"></div></div>');
+  const area=document.querySelector(".findarea"); area.style.pointerEvents="auto";
+}
+function onFound(btn){
+  const s=cur(), k=+btn.dataset.k;
+  if(btn.classList.contains("got")) return;
+  btn.classList.add("got"); btn.classList.remove("pulse"); Run.found++;
+  document.getElementById("fc").textContent=Run.found;
+  S.pts+=3; hud(Run.L.title); burst(4,["✨","💗"]); Snd.sfx("ok");
+  document.getElementById("fb").innerHTML='<b>Achou: '+s.items[k].n+'!</b> '+(s.npcFound?'“'+s.npcFound+'”':'');
+  if(Run.found>=s.items.length) endFind(true);
+}
+function onMissFind(){
+  const s=cur(); if(Run.found>=s.items.length) return;
+  Run.misses++;
+  document.getElementById("fb").innerHTML='<b>'+(Run.L.npc?CHARS[Run.L.npc].name:"Gertrudes")+':</b> “'+s.npcMiss+'”';
+  const act=document.getElementById("act"); let h="";
+  if(Run.misses>=2) h+='<button class="btn sec" data-act="hint">💡 Dica da Gertrudes</button>';
+  if(Run.misses>=4) h+='<button class="btn sec" data-act="fskip">Pular desafio »</button>';
+  act.innerHTML=h; mood("confused");
+}
+function endFind(ok){
+  const act=document.getElementById("act");
+  document.getElementById("fb").className="fb good";
+  document.getElementById("fb").innerHTML=ok?'<b>Você achou tudo! +💗</b> Gertrudes: “Aff! Você está ficando bom demais nisso. Assim não tem graça!”':'Tudo bem, vamos em frente!';
+  if(ok){ S.hearts++; S.pts+=5; hud(Run.L.title); mood("cheer"); burst(12); Snd.sfx("win"); }
+  act.innerHTML='<button class="btn big" data-act="qnext">Continuar »</button>'; save();
+}
+/* ---------- perguntas opcionais ---------- */
+function viewAsk(s){
+  const chips = (s.chips||[]).map(c=>'<button class="chip" data-act="chip" data-t="'+esc(c)+'">'+c+'</button>').join("");
+  show(stageLevel("gertrudes",true)
+   +'<div class="panel"><div class="q">'+s.q+'</div><div class="chips">'+chips+'</div>'
+   +'<small>'+(CFG.FORMSPREE_URL?'💌 O que você escrever aqui será enviado para a Mary. É opcional.':'O que você escrever fica só neste aparelho. É opcional.')+'</small>'
+   +'<input class="txt" id="ans" maxlength="240" placeholder="'+esc(s.ph||"")+'" value="'+esc(S.opt[s.id]||"")+'">'
+   +'<div class="row"><button class="btn" data-act="asave">Guardar 💌</button><button class="btn sec" data-act="askip">Pular »</button></div></div>');
+}
+/* ---------- recompensa ---------- */
+function screenReward(){
+  const L=Run.L, id=Run.id;
+  if(!S.done[id]){
+    S.done[id]=true; S.hearts++; S.pts+=20; S.items.push({e:L.reward.e,n:L.reward.n});
+    S.animFrom = S.pos; S.pos = id;
+  }
+  save(); if(id==="caminho") queueSend(); hud(L.title); burst(26); Snd.sfx("win");
+  const last = id==="chico";
+  show('<div class="stage single">'+(L.npc?'<div class="actor big" style="width:clamp(110px,36vw,160px)">'+sprite(L.npc)+'</div>':'<div class="bigemoji">🌸</div>')+'</div>'
+   +'<div class="panel reward"><div class="rwe">'+L.reward.e+'</div><div class="q">Fase concluída!</div><div><b>Você ganhou:</b> '+L.reward.n+'<br><small>'+L.reward.t+'</small></div>'
+   +'<div class="fb good" style="width:100%">💗 +1 coração · ✨ +20 pontos de afeto</div>'
+   +'<button class="btn big" data-act="'+(last?"toReunion":"map")+'">'+(last?"Ir até a Mary 💕":"Voltar ao mapa 🗺️")+'</button></div>');
+}
+/* ---------- reencontro ---------- */
+function screenReunion(){
+  Run=null; setBG("garden"); hud("Jardim do Reencontro");
+  runLines(REUNION, (w,d,b)=>'<div class="stage reun"><div class="hug"><div class="a '+(w==="mary"?"talk":"")+'">'+sprite("matheus")+'</div><div class="a m2 '+(w==="matheus"?"talk":"")+'">'+sprite("mary")+'</div><div class="bh">❤️</div></div>'
+    +'<div class="pets"><div class="p" style="width:clamp(44px,13vw,64px)">'+sprite("gertrudes")+'</div><div class="p">'+sprite("luna")+'</div><div class="p" style="width:clamp(56px,17vw,86px)">'+sprite("frida")+'</div><div class="p">'+sprite("stella")+'</div><div class="p" style="width:clamp(44px,13vw,64px)">'+sprite("chico")+'</div></div></div>'
+    +'<div class="panel" style="margin-top:84px">'+d+'<div class="row">'+b+'</div></div>',
+    ()=>{ S.reunion=true; S.pts+=30; save(); burst(40); Snd.sfx("win"); screenLetterGate(); }, false);
+  burst(18);
+}
+function screenLetterGate(){
+  hud("Jardim do Reencontro");
+  show('<div class="stage single"><div class="bigemoji">💌</div></div><div class="panel reward"><div class="q">Mary tem uma carta para você</div><div>Leia com calma. Não tem limite de tempo.</div><button class="btn big" data-act="letter">Abrir a carta 💌</button></div>');
+}
+function screenLetter(){
+  if(!S.reunion){ toast("A carta só abre no fim da aventura 💌"); return screenMap(); }
+  setBG("garden"); hud("Carta final");
+  const ps = LETTER.map((p,i)=>'<p'+(i===LETTER.length-1?' class="sign"':'')+'>'+esc(p)+'</p>').join("");
+  show('<div class="paper">'+ps+'</div><div class="letterbar"><button class="btn big" data-act="summary">Ver resumo da aventura ✨</button></div>');
+  burst(6,["💗","💖","🌸"]);
+}
+function screenSummary(){
+  queueSend(); setBG("castle"); hud("Resumo");
+  const labels={sonho:"Sonho ao lado da Mary",lembranca:"Lembrança que faz sorrir",admira:"O que mais admiro",promessa:"Promessa para o futuro"};
+  const ans = Object.keys(labels).filter(k=>S.opt[k]).map(k=>'<div class="ans"><b>'+labels[k]+':</b> '+esc(S.opt[k])+'</div>').join("");
+  show('<div class="stage single" style="flex:0 0 22%"><div class="bigemoji" style="font-size:64px">🏆</div></div><div class="panel" style="max-height:78%">'
+   +'<div class="q">Aventura completa! 🎉</div>'
+   +'<div class="stat"><span>Fases concluídas</span><span>'+ORDER.filter(k=>S.done[k]).length+' / 5</span></div>'
+   +'<div class="stat"><span>Desafios acertados</span><span>'+S.right+' / '+S.total+'</span></div>'
+   +'<div class="stat"><span>Acertos de primeira</span><span>'+S.first+'</span></div>'
+   +'<div class="stat"><span>Corações 💗</span><span>'+S.hearts+'</span></div>'
+   +'<div class="stat"><span>Pontos de afeto ✨</span><span>'+S.pts+'</span></div>'
+   +'<div class="stat"><span>Mochila</span><span>'+S.items.map(i=>i.e).join(" ")+'</span></div>'
+   +(ans?'<div class="q" style="font-size:15px">As suas respostas 💞</div>'+ans+'<small>'+(CFG.FORMSPREE_URL?'(a Mary recebeu uma cópia)':'(ficam salvas só neste aparelho)')+'</small>':'')
+   +'<div class="fb good">Matheus, você enfrentou ciúmes, brinquedos, petiscos suspeitos e um papagaio dramático, só para chegar até a Mary. Algumas jornadas valem cada passo. ❤️</div>'
+   +'<div class="row"><button class="btn sec" data-act="letter">Reler a carta</button><button class="btn" data-act="reset">Jogar de novo</button></div>'
+   +'<button class="btn sec" data-act="title">Voltar ao início</button></div>');
+  burst(20);
+}
+
+/* ================================================================
+   8) AÇÕES (cliques)
+   ================================================================ */
+const ACT = {
+  start(){ Snd.init(); if(S.started && Object.keys(S.done).length){ screenMap(); } else if(S.started && S.reunion){ screenLetter(); } else if(S.started && Object.keys(S.done).length===0){ screenMap(); } else { screenIntro(); } },
+  howto(){ howTo(); },
+  close(){ closeModal(); },
+  snd(){ Snd.toggle(); if(!Snd.ctx) toast("Seu navegador não permite áudio."); if(Run||LR||S.started){ if(HUD.classList.contains("off")) screenTitle(); else hud(document.querySelector(".ttl")?document.querySelector(".ttl").textContent:""); } else screenTitle(); },
+  menu(){ modal('<h2>Menu</h2><button class="btn sec" data-act="howtoM">Como jogar</button><button class="btn sec" data-act="title2">Tela inicial</button><button class="btn" data-act="reset">Recomeçar do zero</button><button class="btn sec" data-act="close">Fechar</button>'); },
+  howtoM(){ closeModal(); howTo(); },
+  title2(){ closeModal(); screenTitle(); },
+  title(){ screenTitle(); },
+  reset(){ closeModal(); modal('<h2>Recomeçar?</h2><p>Todo o progresso e as respostas salvas neste aparelho serão apagados.</p><div class="row"><button class="btn sec" data-act="close">Cancelar</button><button class="btn" data-act="doReset">Sim, recomeçar</button></div>'); },
+  doReset(){ closeModal(); S=fresh(); try{localStorage.removeItem(KEY);}catch(e){} Run=null; LR=null; screenTitle(); },
+  map(){ closeModal(); if(!S.started) return screenTitle(); screenMap(); },
+  node(b){
+    const id=b.dataset.id;
+    if(b.classList.contains("lock")){ toast("Ainda bloqueado: conclua a fase anterior 🔒"); return; }
+    if(id==="mary"){ if(S.reunion) return screenLetter(); return screenReunion(); }
+    startLevel(id);
+  },
+  lr(){ if(LR.i<LR.lines.length-1){ LR.i++; drawLine(); } else { const d=LR.done; LR=null; d(); } },
+  lrSkip(){ const d=LR.done; LR=null; d(); },
+  pick(b){ onPick(b); },
+  showans(){ showAnswer(); },
+  qnext(){ next(); },
+  fi(b,e){ e.stopPropagation(); onFound(b); },
+  fmiss(b,e){ if(e.target.closest(".fi")) return; onMissFind(); },
+  hint(){ const s=cur(); document.querySelectorAll(".fi:not(.got)").forEach(x=>x.classList.add("pulse")); document.getElementById("fb").innerHTML='🦜 <b>Gertrudes:</b> '+s.hint; },
+  fskip(){ endFind(false); },
+  chip(b){ document.getElementById("ans").value=b.dataset.t; },
+  asave(){ const s=cur(), v=document.getElementById("ans").value.trim(); if(!v){ toast("Escreva ou escolha algo, ou toque em Pular."); return; } S.opt[s.id]=v; S.hearts++; S.pts+=5; save(); burst(8,["💌","💗"]); hud(Run.L.title); next(); },
+  askip(){ next(); },
+  toReunion(){ screenReunion(); },
+  letter(){ screenLetter(); },
+  summary(){ screenSummary(); }
+};
+document.addEventListener("input", e=>{
+  if(e.target && e.target.id==="ans" && Run && cur() && cur().t==="ask"){
+    const v=e.target.value.trim(), id=cur().id;
+    if(v) S.opt[id]=v; else delete S.opt[id];
+    save();
+  }
+});
+document.addEventListener("click", e=>{
+  Snd.init();
+  const b = e.target.closest("[data-act]");
+  if(!b || b.disabled) return;
+  const fn = ACT[b.dataset.act]; if(fn) fn(b,e);
+});
+
+/* ================================================================
+   9) INÍCIO
+   ================================================================ */
+screenTitle();
+trySend();
+</script>
+</body>
+</html>
