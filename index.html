@@ -643,8 +643,8 @@ function trySend(){
   sending = true;
   const sent = S.pending, opt = JSON.parse(sent);
   const body = {_subject:"💌 Respostas do Matheus — A Jornada do Amor"};
-  Object.keys(LABELS).forEach(k=>{ body[LABELS[k]] = opt[k] || "(não respondeu)"; });
-  body["Enviado em"] = new Date().toLocaleString("pt-BR");
+  Object.keys(LABELS).forEach((k,i)=>{ body[(i+1)+". "+LABELS[k]] = opt[k] || "(não respondeu)"; });
+  body["5. Enviado em"] = new Date().toLocaleString("pt-BR");
   fetch(CFG.FORMSPREE_URL,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(body)})
     .then(r=>{ if(r.ok){ S.sentSnap = sent; if(S.pending===sent) S.pending = null; save(); } })
     .catch(()=>{})
@@ -886,6 +886,13 @@ function endFind(ok){
   act.innerHTML='<button class="btn big" data-act="qnext">Continuar »</button>'; save();
 }
 /* ---------- perguntas opcionais ---------- */
+/* grava o que está escrito no campo (usado ao digitar, ao tocar numa sugestão, em Guardar e em Pular) */
+function commitAns(){
+  const f=document.getElementById("ans"); if(!f||!Run||!cur()||cur().t!=="ask") return;
+  const v=f.value.trim(), id=cur().id;
+  if(v) S.opt[id]=v; else delete S.opt[id];
+  save();
+}
 function viewAsk(s){
   const chips = (s.chips||[]).map(c=>'<button class="chip" data-act="chip" data-t="'+esc(c)+'">'+c+'</button>').join("");
   show(stageLevel("gertrudes",true)
@@ -977,19 +984,15 @@ const ACT = {
   fmiss(b,e){ if(e.target.closest(".fi")) return; onMissFind(); },
   hint(){ const s=cur(); document.querySelectorAll(".fi:not(.got)").forEach(x=>x.classList.add("pulse")); document.getElementById("fb").innerHTML='🦜 <b>Gertrudes:</b> '+s.hint; },
   fskip(){ endFind(false); },
-  chip(b){ document.getElementById("ans").value=b.dataset.t; },
-  asave(){ const s=cur(), v=document.getElementById("ans").value.trim(); if(!v){ toast("Escreva ou escolha algo, ou toque em Pular."); return; } S.opt[s.id]=v; S.hearts++; S.pts+=5; save(); burst(8,["💌","💗"]); hud(Run.L.title); next(); },
-  askip(){ next(); },
+  chip(b){ document.getElementById("ans").value=b.dataset.t; commitAns(); },
+  asave(){ const v=document.getElementById("ans").value.trim(); if(!v){ toast("Escreva ou escolha algo, ou toque em Pular."); return; } commitAns(); S.hearts++; S.pts+=5; save(); burst(8,["💌","💗"]); hud(Run.L.title); next(); },
+  askip(){ commitAns(); next(); },
   toReunion(){ screenReunion(); },
   letter(){ screenLetter(); },
   summary(){ screenSummary(); }
 };
 document.addEventListener("input", e=>{
-  if(e.target && e.target.id==="ans" && Run && cur() && cur().t==="ask"){
-    const v=e.target.value.trim(), id=cur().id;
-    if(v) S.opt[id]=v; else delete S.opt[id];
-    save();
-  }
+  if(e.target && e.target.id==="ans") commitAns();
 });
 document.addEventListener("click", e=>{
   Snd.init();
